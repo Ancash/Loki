@@ -1,12 +1,14 @@
 package de.ancash.loki.minecraft;
 
 import java.io.File;
+import java.util.stream.Collectors;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import de.ancash.loki.LokiPluginDescription;
 import de.ancash.loki.exception.InvalidPluginException;
 
 public class Loki extends JavaPlugin {
@@ -119,6 +121,11 @@ public class Loki extends JavaPlugin {
 						sender.sendMessage(String.format("§cCould not load plugin '%s': %s", args[i], e.getMessage()));
 						e.printStackTrace();
 					}
+			return true;
+		case "plugins":
+			if (!sender.hasPermission("loki.plugins"))
+				return false;
+			sender.sendMessage(String.join(", ", lokiPluginManager.getPlugins().stream().map(MinecraftLokiPlugin::getDescription).map(LokiPluginDescription::getName).collect(Collectors.toList())));
 			return true;
 		default:
 			break;
