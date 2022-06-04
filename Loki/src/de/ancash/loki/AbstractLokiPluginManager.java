@@ -45,7 +45,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 		File[] files = dir.listFiles();
 		for (File jar : files)
 			try {
-				LokiPluginLoader<T> u = new LokiPluginLoader<>(pluginClazz, jar);
+				LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, jar);
 				u.loadJarEntries();
 				u.loadClasses();
 				pluginLoadersByName.put(u.getDescription().getName(), u);
@@ -63,7 +63,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	 */
 	public LokiPluginLoader<T> loadJar(File file) {
 		try {
-			LokiPluginLoader<T> u = new LokiPluginLoader<>(pluginClazz, file);
+			LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, file);
 			u.loadJarEntries();
 			u.loadClasses();
 			pluginLoadersByName.put(u.getDescription().getName(), u);

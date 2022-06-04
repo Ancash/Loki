@@ -7,6 +7,7 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import de.ancash.loki.exception.InvalidPluginException;
 
@@ -20,11 +21,13 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 	private final Map<String, Class<?>> classesByName = new HashMap<>();
 	private final LokiPluginLoader<T> loader;
 	private final Class<T> clazz;
+	private final Logger logger;
 	
-	public LokiPluginClassLoader(Class<T> clazz, LokiPluginLoader<T> loader, ClassLoader parent, File file, List<String> classEntries) throws MalformedURLException {
+	public LokiPluginClassLoader(Logger logger, Class<T> clazz, LokiPluginLoader<T> loader, ClassLoader parent, File file, List<String> classEntries) throws MalformedURLException {
 		super(new URL[] {file.toURI().toURL()}, parent);
 		this.classEntries = classEntries;
 		this.clazz = clazz;
+		this.logger = logger;
 		this.loader = loader;
 	}
 	
@@ -38,7 +41,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 			try {
 				classesByName.put(className, loadClass(className));
 			} catch(ClassNotFoundException e) {
-				throw new InvalidPluginException("Could not load class " + className, e);
+				logger.warning(String.format("Could not find class %s", className));
 			}
 	}
 	

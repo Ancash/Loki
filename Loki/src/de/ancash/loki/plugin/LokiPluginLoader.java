@@ -8,6 +8,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import de.ancash.loki.LokiPluginDescription;
@@ -21,9 +22,11 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	private LokiPluginClassLoader<T> clazzLoader;
 	private LokiPluginDescription description;
 	private final Class<T> pluginClazz;
+	private final Logger logger;
 	
-	public LokiPluginLoader(Class<T> pluginClazz, File file) throws InvalidPluginException {
+	public LokiPluginLoader(Logger logger, Class<T> pluginClazz, File file) throws InvalidPluginException {
 		this.file = file;
+		this.logger = logger;
 		this.pluginClazz = pluginClazz;
 	}
 
@@ -55,7 +58,7 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 		if(description == null || !description.isValid())
 			throw new InvalidPluginException("No/Invalid loki.yml found in " + file.getName());
 		try {
-			clazzLoader = new LokiPluginClassLoader<>(pluginClazz, this, getClass().getClassLoader(), file, filterClassEntries());
+			clazzLoader = new LokiPluginClassLoader<>(logger, pluginClazz, this, getClass().getClassLoader(), file, filterClassEntries());
 		} catch (MalformedURLException e1) {
 			throw new InvalidPluginException(e1);
 		}
