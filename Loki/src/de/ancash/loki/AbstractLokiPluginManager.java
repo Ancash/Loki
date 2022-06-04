@@ -45,6 +45,8 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 		File[] files = dir.listFiles();
 		for (File jar : files)
 			try {
+				if(jar.isDirectory())
+					continue;
 				LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, jar);
 				u.loadJarEntries();
 				u.loadClasses();
@@ -299,11 +301,15 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	public void loadPlugin(LokiPluginLoader<T> l) throws InvalidPluginException {
 		if(l.getDescription() != null && isPluginLoaded(l.getDescription().getName()))
 			throw new InvalidPluginException("Plugin already loaded");
-		l.check();
-		pluginLoadersByName.put(l.getDescription().getName(), l);
-		l.newInstance();
-		loadedPlugins.add(l.getPlugin());
-		onPluginLoaded(l);
+		try {
+			l.check();
+			pluginLoadersByName.put(l.getDescription().getName(), l);
+			l.newInstance();
+			loadedPlugins.add(l.getPlugin());
+			onPluginLoaded(l);
+		} catch(Exception ex) {
+			throw new InvalidPluginException("Error while instantiating", ex);
+		}
 	}
 
 	/**
@@ -317,21 +323,27 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	/**
 	 * @see AbstractLokiPluginManager#unloadPlugin(LokiPluginLoader)
 	 * @param name plugin name
+	 * @throws InvalidPluginException 
 	 */
-	public void unloadPlugin(String name) {
+	public void unloadPlugin(String name) throws InvalidPluginException {
 		unloadPlugin(pluginLoadersByName.get(name));
 	}
 
 	/**
 	 * Unloads the given plugin
 	 * @param l plugin to unload
+	 * @throws InvalidPluginException 
 	 */
-	public void unloadPlugin(LokiPluginLoader<T> l) {
-		onPluginUnload(l);
-		AbstractLokiPlugin pl = l.getPlugin();
-		pluginLoadersByName.get(l.getDescription().getName()).unload();
-		loadedPlugins.remove(pl);
-		Runtime.getRuntime().gc();
+	public void unloadPlugin(LokiPluginLoader<T> l) throws InvalidPluginException {
+		try {
+			onPluginUnload(l);
+			AbstractLokiPlugin pl = l.getPlugin();
+			pluginLoadersByName.get(l.getDescription().getName()).unload();
+			loadedPlugins.remove(pl);
+			Runtime.getRuntime().gc();
+		} catch(Exception ex) {
+			throw new InvalidPluginException("Error while disabling", ex);
+		}
 	}
 	
 	public AbstractLokiPlugin getPlugin(String name) {
@@ -372,9 +384,13 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	@SuppressWarnings("unchecked")
 	public void unload() {
 		while (!loadedPlugins.isEmpty()) {
-			unloadPlugin(
-					((LokiPluginClassLoader<T>) loadedPlugins.get(loadedPlugins.size() - 1).getClass().getClassLoader())
-							.getLoader().getDescription().getName());
+			try {
+				unloadPlugin(
+						((LokiPluginClassLoader<T>) loadedPlugins.get(loadedPlugins.size() - 1).getClass().getClassLoader())
+								.getLoader().getDescription().getName());
+			} catch (InvalidPluginException e) {
+				logger.log(Level.SEVERE, "Error while disabling", e);
+			}
 		}
 	}
 }

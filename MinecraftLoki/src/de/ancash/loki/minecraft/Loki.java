@@ -1,6 +1,7 @@
 package de.ancash.loki.minecraft;
 
 import java.io.File;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.bukkit.command.Command;
@@ -103,7 +104,11 @@ public class Loki extends JavaPlugin {
 					if (!lokiPluginManager.isPluginLoaded(pluginName))
 						sender.sendMessage(String.format("§cCould not find plugin '%s'", pluginName));
 					else
-						lokiPluginManager.unloadPlugin(pluginName);
+						try {
+							lokiPluginManager.unloadPlugin(pluginName);
+						} catch (InvalidPluginException e) {
+							getLogger().log(Level.SEVERE, String.format("Error while disablin %s", pluginName), e);
+						}
 				}
 			return true;
 		case "load":
