@@ -40,7 +40,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 		for(String className : classEntries)
 			try {
 				classesByName.put(className, loadClass(className));
-			} catch(ClassNotFoundException e) {
+			} catch(ClassNotFoundException | NoClassDefFoundError e) {
 				logger.warning(String.format("Could not find class %s", className));
 			}
 	}
