@@ -2,13 +2,16 @@
 package de.ancash.loki;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
@@ -17,14 +20,15 @@ import java.util.logging.Logger;
 import de.ancash.loki.exception.InvalidPluginException;
 import de.ancash.loki.exception.UnknownDependencyException;
 import de.ancash.loki.plugin.AbstractLokiPlugin;
+import de.ancash.loki.plugin.LokiPluginClassLoader;
 import de.ancash.loki.plugin.LokiPluginLoader;
 
 public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 
 	private final File dir;
 	private final Class<T> pluginClazz;
-	private final Set<T> loadedPlugins = new HashSet<>();
-	private final HashMap<File, LokiPluginLoader<T>> pluginLoadersByFile = new HashMap<>();
+	private final List<T> loadedPlugins = new ArrayList<>();
+	private final HashMap<String, LokiPluginLoader<T>> pluginLoadersByName = new HashMap<>();
 	private final Logger logger;
 	
 	public AbstractLokiPluginManager(Logger logger, Class<T> pluginClazz, File dir) {
@@ -45,14 +49,34 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 				LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, jar);
 				u.loadJarEntries();
 				u.loadClasses();
-				pluginLoadersByFile.put(u.getFile(), u);
+				pluginLoadersByName.put(u.getDescription().getName(), u);
 				onJarLoaded(u);
 			} catch (InvalidPluginException e) {
 				logger.severe("Could not load plugin " + jar.getName() + ": " + e.getMessage());
 			}
 		return this;
 	}
-
+	
+	/**
+	 * Load specific jar file
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public LokiPluginLoader<T> loadJar(File file) {
+		try {
+			LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, file);
+			u.loadJarEntries();
+			u.loadClasses();
+			pluginLoadersByName.put(u.getDescription().getName(), u);
+			onJarLoaded(u);
+			return u;
+		} catch (InvalidPluginException e) {
+			logger.severe("Could not load plugin " + file.getName() + ": " + e.getMessage());
+			return null;
+		}
+	}
+	
 	/**
 	 * Called after a jar in {@link #loadJars} has been loaded.
 	 * 
@@ -74,15 +98,6 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	 * @param t
 	 */
 	public abstract void onPluginUnload(LokiPluginLoader<T> t);
-	
-	/**
-	 * Calls {@link AbstractLokiPluginManager#load()}
-	 * 
-	 * @return
-	 */
-	public AbstractLokiPluginManager<T> reload() {
-		return load();
-	}
 
 	private void loadPlugins() {
 		Map<String, File> plugins = new HashMap<>();
@@ -90,7 +105,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 		Map<String, Collection<String>> dependencies = new HashMap<>();
 		Map<String, Collection<String>> softDependencies = new HashMap<>();
 
-		for (Entry<File, LokiPluginLoader<T>> entry :  pluginLoadersByFile.entrySet()) {
+		for (Entry<String, LokiPluginLoader<T>> entry :  pluginLoadersByName.entrySet()) {
 			LokiPluginDescription description = entry.getValue().getDescription();
 			File replacedFile = (File) plugins.put(description.getName(), entry.getValue().getFile());
 			if (replacedFile != null) {
@@ -193,10 +208,10 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 							missingDependency = false;
 
 							try {
-								pluginLoadersByFile.get(file).newInstance();
-								this.loadedPlugins.add(pluginLoadersByFile.get(file).getPlugin());
+								pluginLoadersByName.get(plugin).newInstance();
+								this.loadedPlugins.add(pluginLoadersByName.get(plugin).getPlugin());
 								loadedPlugins.add(plugin);
-								onPluginLoaded(pluginLoadersByFile.get(file));
+								onPluginLoaded(pluginLoadersByName.get(plugin));
 							} catch (InvalidPluginException var21) {
 								logger.log(Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + dir.getPath() + "'", var21);
 							}
@@ -220,10 +235,10 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 					pluginIterator.remove();
 
 					try {
-						pluginLoadersByFile.get(file).newInstance();
-						this.loadedPlugins.add(pluginLoadersByFile.get(file).getPlugin());
+						pluginLoadersByName.get(plugin).newInstance();
+						this.loadedPlugins.add(pluginLoadersByName.get(plugin).getPlugin());
 						loadedPlugins.add(plugin);
-						onPluginLoaded(pluginLoadersByFile.get(file));
+						onPluginLoaded(pluginLoadersByName.get(plugin));
 						break;
 					} catch (InvalidPluginException var22) {
 						logger.log(Level.SEVERE,
@@ -247,6 +262,15 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	}
 	
 	/**
+	 * Calls {@link AbstractLokiPluginManager#load()}
+	 * 
+	 * @return
+	 */
+	public AbstractLokiPluginManager<T> reload() {
+		return load();
+	}
+	
+	/**
 	 * Calls in order:
 	 * {@link AbstractLokiPluginManager#unload()} 
 	 * {@link AbstractLokiPluginManager#loadJars()}
@@ -260,13 +284,69 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 		loadPlugins();
 		return this;
 	}
+	
+	/**
+	 * Creates a new instance of a already loaded plugin jar with the given name
+	 * 
+	 * @param name plugin name
+	 * @return
+	 * @throws InvalidPluginException 
+	 */
+	public AbstractLokiPluginManager<T> loadPlugin(String name) throws InvalidPluginException {
+		if(isPluginLoaded(name))
+			throw new InvalidPluginException("Plugin already loaded");
+		pluginLoadersByName.get(name).newInstance();
+		loadedPlugins.add(pluginLoadersByName.get(name).getPlugin());
+		onPluginLoaded(pluginLoadersByName.get(name));
+		return this;
+	}
+	
+	/**
+	 * 
+	 * @param name plugin name
+	 * @return whether loaded or not
+	 */
+	public boolean isPluginLoaded(String name) {
+		return pluginLoadersByName.containsKey(name);
+	}
 
+	/**
+	 * Calls unloadPlugin(name, true)
+	 * 
+	 * @see AbstractLokiPluginManager#unloadPlugin(String, boolean)
+	 * @param name plugin name
+	 * @return success
+	 */
+	public boolean unloadPlugin(String name) {
+		return unloadPlugin(name, true);
+	}
+	
+	/**
+	 * Unloads plugin
+	 * 
+	 * @param name plugin name
+	 * @param gc call gc after clean up
+	 * @return success
+	 */
+	public boolean unloadPlugin(String name, boolean gc) {
+		Optional<Entry<String, LokiPluginLoader<T>>> optional = pluginLoadersByName.entrySet().stream().filter(entry -> entry.getKey().equals(name)).findFirst();
+		if(!optional.isPresent())
+			return false;
+		Entry<String, LokiPluginLoader<T>> entry = optional.get();
+		onPluginUnload(pluginLoadersByName.get(entry.getKey()));
+		pluginLoadersByName.get(entry.getKey()).unload();
+		loadedPlugins.remove(pluginLoadersByName.remove(entry.getKey()).getPlugin());
+		if(gc)
+			Runtime.getRuntime().gc();
+		return true;
+	}
+	
 	/**
 	 * 
 	 * @return all loaded plugins
 	 */
-	public Set<T> getPlugins() {
-		return Collections.unmodifiableSet(loadedPlugins);
+	public List<T> getPlugins() {
+		return Collections.unmodifiableList(loadedPlugins);
 	}
 	
 	/**
@@ -278,14 +358,13 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	 * 
 	 * @return this
 	 */
+	@SuppressWarnings("unchecked")
 	public AbstractLokiPluginManager<T> unload() {
-		for (LokiPluginLoader<T> l : pluginLoadersByFile.values()) {
-			onPluginUnload(l);
-			l.unload();
+		while(!loadedPlugins.isEmpty()) {
+			unloadPlugin(((LokiPluginClassLoader<T>) (LokiPluginClassLoader<T>) loadedPlugins.get(loadedPlugins.size() - 1).getClass().getClassLoader()).getLoader().getDescription().getName());
 		}
-		pluginLoadersByFile.clear();
-		loadedPlugins.clear();
-		Runtime.getRuntime().gc();
+		System.out.println(loadedPlugins.size());
+		System.out.println(pluginLoadersByName.size());
 		return this;
 	}
 }
