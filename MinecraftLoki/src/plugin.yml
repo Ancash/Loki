@@ -1,0 +1,8 @@
+name: Loki
+version: 1.0.0
+main: de.ancash.loki.minecraft.Loki
+api-version: 1.13
+
+commands:
+   loki:
+      usage: "/loki reload\n/loki unload\n/loki load"
