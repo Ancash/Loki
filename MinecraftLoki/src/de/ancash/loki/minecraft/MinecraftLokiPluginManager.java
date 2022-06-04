@@ -21,13 +21,13 @@ public class MinecraftLokiPluginManager extends AbstractLokiPluginManager<Minecr
 
 	@Override
 	public void onPluginLoaded(LokiPluginLoader<MinecraftLokiPlugin> arg0) {
-		pl.getLogger().info("Loading " + arg0.getDescription().getMain() + " v" + arg0.getDescription().getVersion());
+		pl.getLogger().info("Loaded plugin " + arg0.getDescription().getName() + " version " + arg0.getDescription().getVersion() + " by " + arg0.getDescription().getAuthor());
 		arg0.getPlugin().onLoad();
 	}
 
 	@Override
 	public void onPluginUnload(LokiPluginLoader<MinecraftLokiPlugin> arg0) {
-		pl.getLogger().info("Disabling " + arg0.getDescription().getMain() + " v" + arg0.getDescription().getVersion());
+		pl.getLogger().info("Disabling " + arg0.getDescription().getName() + " version " + arg0.getDescription().getVersion() + " by " + arg0.getDescription().getAuthor());
 		arg0.getPlugin().onDisable();
 	}
 

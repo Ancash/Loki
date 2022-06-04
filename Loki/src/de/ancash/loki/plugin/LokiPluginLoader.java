@@ -8,7 +8,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import de.ancash.loki.LokiPluginDescription;
@@ -22,11 +21,9 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	private LokiPluginClassLoader<T> clazzLoader;
 	private LokiPluginDescription description;
 	private final Class<T> pluginClazz;
-	private final Logger logger;
 	
-	public LokiPluginLoader(Logger logger, Class<T> pluginClazz, File file) throws InvalidPluginException {
+	public LokiPluginLoader(Class<T> pluginClazz, File file) throws InvalidPluginException {
 		this.file = file;
-		this.logger = logger;
 		this.pluginClazz = pluginClazz;
 	}
 
@@ -62,12 +59,18 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 		} catch (MalformedURLException e1) {
 			throw new InvalidPluginException(e1);
 		}
-		logger.info("Loaded plugin " + description.getName() + " version " + description.getVersion() + " by " + description.getAuthor());
-		
 	}
 	
 	private List<String> filterClassEntries() {
 		return jarEntries.stream().filter(e -> e.getName().endsWith(".class")).map(e -> e.getName().replaceAll("/", "\\.")).map(className -> className.substring(0, className.lastIndexOf('.'))).collect(Collectors.toList());
+	}
+	
+	
+	public void check() throws InvalidPluginException {
+		if(clazzLoader == null) {
+			loadJarEntries();
+			loadClasses();
+		}
 	}
 
 	/**
