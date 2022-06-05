@@ -18,7 +18,7 @@ public class Loki extends JavaPlugin {
 	private static Loki INSTANCE;
 
 	private final File dir = new File("plugins/Loki/plugins");
-	private final MinecraftLokiPluginManager lokiPluginManager = new MinecraftLokiPluginManager(this, dir);
+	private MinecraftLokiPluginManager lokiPluginManager = new MinecraftLokiPluginManager(this, dir);
 
 	@Override
 	public void onLoad() {
@@ -45,11 +45,14 @@ public class Loki extends JavaPlugin {
 
 	private void reload() {
 		unload();
+		unregisterAll();
+		lokiPluginManager = new MinecraftLokiPluginManager(this, dir);
 		load();
 	}
 
 	private void load() {
 		getLogger().info(String.format("Loading plugins in %s...", dir.getPath()));
+		lokiPluginManager = new MinecraftLokiPluginManager(this, dir);
 		lokiPluginManager.load();
 		lokiPluginManager.getPlugins().forEach(l -> {
 			getLogger().info("Enabling " + l.getDescription().getMain() + " v" + l.getDescription().getVersion());
@@ -61,6 +64,8 @@ public class Loki extends JavaPlugin {
 		getLogger().info("Disabling plugins and unregistering all listeners");
 		HandlerList.unregisterAll(INSTANCE);
 		lokiPluginManager.unload();
+		unregisterAll();
+		lokiPluginManager = null;
 		getLogger().info("Plugins disabled!");
 	}
 
@@ -108,7 +113,6 @@ public class Loki extends JavaPlugin {
 					else
 						try {
 							lokiPluginManager.unloadPlugin(pluginName);
-							unregisterAll();
 						} catch (InvalidPluginException e) {
 							getLogger().log(Level.SEVERE, String.format("Error while disablin %s", pluginName), e);
 						}
