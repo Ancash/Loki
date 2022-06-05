@@ -1,4 +1,3 @@
-
 package de.ancash.loki;
 
 import java.io.File;
@@ -45,7 +44,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 		File[] files = dir.listFiles();
 		for (File jar : files)
 			try {
-				if(jar.isDirectory())
+				if (jar.isDirectory())
 					continue;
 				LokiPluginLoader<T> u = new LokiPluginLoader<>(logger, pluginClazz, jar);
 				u.loadJarEntries();
@@ -291,7 +290,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	public void loadPlugin(String name) throws InvalidPluginException {
 		loadPlugin(pluginLoadersByName.get(name));
 	}
-	
+
 	/**
 	 * Creates a new instance of a already loaded plugin jar with the given name
 	 * 
@@ -299,7 +298,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	 * @throws InvalidPluginException
 	 */
 	public void loadPlugin(LokiPluginLoader<T> l) throws InvalidPluginException {
-		if(l.getDescription() != null && isPluginLoaded(l.getDescription().getName()))
+		if (l.getDescription() != null && isPluginLoaded(l.getDescription().getName()))
 			throw new InvalidPluginException("Plugin already loaded");
 		try {
 			l.check();
@@ -307,7 +306,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 			l.newInstance();
 			loadedPlugins.add(l.getPlugin());
 			onPluginLoaded(l);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			throw new InvalidPluginException("Error while instantiating", ex);
 		}
 	}
@@ -323,7 +322,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	/**
 	 * @see AbstractLokiPluginManager#unloadPlugin(LokiPluginLoader)
 	 * @param name plugin name
-	 * @throws InvalidPluginException 
+	 * @throws InvalidPluginException
 	 */
 	public void unloadPlugin(String name) throws InvalidPluginException {
 		unloadPlugin(pluginLoadersByName.get(name));
@@ -331,8 +330,9 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 
 	/**
 	 * Unloads the given plugin
+	 * 
 	 * @param l plugin to unload
-	 * @throws InvalidPluginException 
+	 * @throws InvalidPluginException
 	 */
 	public void unloadPlugin(LokiPluginLoader<T> l) throws InvalidPluginException {
 		try {
@@ -341,15 +341,15 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 			pluginLoadersByName.get(l.getDescription().getName()).unload();
 			loadedPlugins.remove(pl);
 			Runtime.getRuntime().gc();
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			throw new InvalidPluginException("Error while disabling", ex);
 		}
 	}
-	
+
 	public AbstractLokiPlugin getPlugin(String name) {
 		return pluginLoadersByName.get(name).getPlugin();
 	}
-	
+
 	/**
 	 * 
 	 * @return all loaded plugins
@@ -361,17 +361,17 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	/**
 	 * @see AbstractLokiPluginManager#reloadPlugin(LokiPluginLoader)
 	 * @param name
-	 * @throws InvalidPluginException 
+	 * @throws InvalidPluginException
 	 */
 	public void reloadPlugin(String name) throws InvalidPluginException {
 		reloadPlugin(pluginLoadersByName.get(name));
 	}
-	
+
 	public void reloadPlugin(LokiPluginLoader<T> l) throws InvalidPluginException {
 		unloadPlugin(l);
 		loadPlugin(l);
 	}
-	
+
 	/**
 	 * Removes all references to all loaded {@link AbstractLokiPlugin} and
 	 * {@link LokiPluginLoader}. If a {@link AbstractLokiPlugin} has references
@@ -385,9 +385,8 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	public void unload() {
 		while (!loadedPlugins.isEmpty()) {
 			try {
-				unloadPlugin(
-						((LokiPluginClassLoader<T>) loadedPlugins.get(loadedPlugins.size() - 1).getClass().getClassLoader())
-								.getLoader().getDescription().getName());
+				unloadPlugin(((LokiPluginClassLoader<T>) loadedPlugins.get(loadedPlugins.size() - 1).getClass()
+						.getClassLoader()).getLoader().getDescription().getName());
 			} catch (InvalidPluginException e) {
 				logger.log(Level.SEVERE, "Error while disabling", e);
 			}

@@ -30,5 +30,4 @@ public class MinecraftLokiPluginManager extends AbstractLokiPluginManager<Minecr
 		pl.getLogger().info("Disabling " + arg0.getDescription().getName() + " version " + arg0.getDescription().getVersion() + " by " + arg0.getDescription().getAuthor());
 		arg0.getPlugin().onDisable();
 	}
-
 }
