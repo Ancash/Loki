@@ -22,7 +22,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 	
 	private final List<String> classEntries;
 	private final Map<String, Class<?>> classesByName = new HashMap<>();
-	private final LokiPluginLoader<T> loader;
+	private LokiPluginLoader<T> loader;
 	private final Class<T> clazz;
 	private final Logger logger;
 	
@@ -116,6 +116,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 				}
 			}
 		}
+		loader = null;
 	}
 	
 	public LokiPluginLoader<T> getLoader() {
