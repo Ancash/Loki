@@ -42,7 +42,11 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 	public void loadClasses() throws InvalidPluginException {
 		for(String className : classEntries)
 			try {
-				classesByName.put(className, loadClass(className));
+				try {
+					Class.forName(className);
+				} catch(ClassNotFoundException e) {
+					classesByName.put(className, loadClass(className));
+				}
 			} catch(ClassNotFoundException | NoClassDefFoundError e) {
 				logger.warning(String.format("Could not find class %s", className));
 			}
@@ -108,7 +112,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 						}
 					}
 				} catch(Throwable ex) {
-					System.err.println(ex);
+					
 				}
 			}
 		}
