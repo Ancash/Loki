@@ -15,9 +15,18 @@ public class LokiPluginDescription {
 
 	private final YamlFile description;
 	
+	private final String name;
+	private final String version;
+	private final String author;
+	private final String main;
+	
 	@SuppressWarnings("deprecation")
 	public LokiPluginDescription(InputStream in) throws IOException {
 		description = YamlFile.loadConfiguration(in);
+		name = description.getString("name");
+		version = description.getString("version");
+		author = description.getString("author");
+		main = description.getString("main");
 		description.set("depend", stringToList(description.getString("depend")));
 		description.set("softdepend", stringToList(description.getString("softdepend")));
 		description.set("loadbefore", stringToList(description.getString("loadebefore")));
@@ -34,19 +43,19 @@ public class LokiPluginDescription {
 	}
 	
 	public String getName() {
-		return getString("name");
+		return name;
 	}
 	
 	public String getVersion() {
-		return getString("version");
+		return version;
 	}
 	
 	public String getAuthor() {
-		return getString("author");
+		return author;
 	}
 	
 	public String getMain() {
-		return getString("main");
+		return main;
 	}
 	
 	public Collection<String> getDepend() {
