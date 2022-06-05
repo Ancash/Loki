@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
 import de.ancash.loki.LokiPluginDescription;
@@ -42,7 +43,8 @@ public class MinecraftLokiPlugin extends AbstractLokiPlugin {
 	}
 
 	public void onDisable() {
-
+		listeners.forEach(l -> HandlerList.unregisterAll(l));
+		listeners.clear();
 	}
 
 	public LokiPluginDescription getDescription() {
