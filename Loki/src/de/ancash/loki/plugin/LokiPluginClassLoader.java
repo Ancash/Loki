@@ -24,6 +24,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 	private final Map<String, Class<?>> classesByName = new HashMap<>();
 	private LokiPluginLoader<T> loader;
 	private final Class<T> clazz;
+	@SuppressWarnings("unused")
 	private final Logger logger;
 	
 	public LokiPluginClassLoader(Logger logger, Class<T> clazz, LokiPluginLoader<T> loader, ClassLoader parent, File file, List<String> classEntries) throws MalformedURLException {
@@ -48,7 +49,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 					classesByName.put(className, loadClass(className));
 				}
 			} catch(ClassNotFoundException | NoClassDefFoundError e) {
-				logger.warning(String.format("Could not find class %s", className));
+				//logger.warning(String.format("Could not find class %s", className));
 			}
 	}
 	
