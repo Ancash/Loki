@@ -1,6 +1,8 @@
 package de.ancash.loki.plugin;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -10,13 +12,14 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import de.ancash.loki.exception.InvalidPluginException;
+import sun.misc.Unsafe;
 
 /**
  * Responsible for loading all classes and creating new main class instances
  * @param <T>
  */
 public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClassLoader{
-
+	
 	private final List<String> classEntries;
 	private final Map<String, Class<?>> classesByName = new HashMap<>();
 	private final LokiPluginLoader<T> loader;
@@ -52,7 +55,7 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 	 * @return new plugin main class instance
 	 * @throws InvalidPluginException
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked" })
 	public T newInstance() throws InvalidPluginException {
 		Class<?> jarClass;
 		
@@ -76,6 +79,38 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends URLClas
 			throw new InvalidPluginException("Abnormal plugin type", e);
 		} catch (IllegalAccessException e) {
 			throw new InvalidPluginException("No public constructor", e);
+		}
+	}
+	
+	public void nullifyStaticFields() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		Field unsafeField;
+		unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+		unsafeField.setAccessible(true);
+		Unsafe unsafe = (Unsafe) unsafeField.get(null);
+		for(Class<?> clazz : classesByName.values()) {
+			Field[] fields = null;
+			try {
+				fields = clazz.getDeclaredFields();
+			} catch(Throwable e) {
+				continue;
+			}
+			for(int i = 0; i<fields.length; i++) {
+				try {
+					Field field = fields[i];
+					if(Modifier.isStatic(field.getModifiers()) && !field.getType().isPrimitive()) {
+						if(Modifier.isFinal(field.getModifiers())) {
+							Object staticFieldBase = unsafe.staticFieldBase(field);
+							long staticFieldOffset = unsafe.staticFieldOffset(field);
+							unsafe.putObject(staticFieldBase, staticFieldOffset, null);
+						} else {
+							field.setAccessible(true);
+							field.set(null, field.getType().cast(null));
+						}
+					}
+				} catch(Throwable ex) {
+					System.err.println(ex);
+				}
+			}
 		}
 	}
 	

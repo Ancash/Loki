@@ -8,6 +8,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -102,6 +103,11 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	}
 
 	public void unload() {
+		try {
+			clazzLoader.nullifyStaticFields();
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			logger.log(Level.SEVERE, "Could not nullify static fields", e);
+		}
 		clazzLoader = null;
 		jarEntries.clear();
 		description = null;
