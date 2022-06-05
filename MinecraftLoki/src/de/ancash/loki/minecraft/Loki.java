@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
@@ -82,6 +83,7 @@ public class Loki extends JavaPlugin {
 						sender.sendMessage(String.format("§cCould not find plugin '%s'", pluginName));
 					else
 						try {
+							unregisterAll();
 							lokiPluginManager.reloadPlugin(pluginName);
 						} catch (InvalidPluginException e) {
 							sender.sendMessage(
@@ -106,6 +108,7 @@ public class Loki extends JavaPlugin {
 					else
 						try {
 							lokiPluginManager.unloadPlugin(pluginName);
+							unregisterAll();
 						} catch (InvalidPluginException e) {
 							getLogger().log(Level.SEVERE, String.format("Error while disablin %s", pluginName), e);
 						}
@@ -138,6 +141,15 @@ public class Loki extends JavaPlugin {
 		return false;
 	}
 
+	private void unregisterAll() {
+		HandlerList.unregisterAll(this);
+		Bukkit.getScheduler().cancelTasks(this);
+		Bukkit.getServicesManager().unregisterAll(this);
+		Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(this);
+		Bukkit.getServer().getMessenger().unregisterOutgoingPluginChannel(this);
+		de.ancash.libs.org.bukkit.event.HandlerList.unregisterAll(this);
+	}
+	
 	public static Loki getInstance() {
 		return INSTANCE;
 	}
