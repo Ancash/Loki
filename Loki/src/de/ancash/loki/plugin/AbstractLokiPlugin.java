@@ -9,14 +9,5 @@ import de.ancash.loki.AbstractLokiPluginManager;
  */
 public abstract class AbstractLokiPlugin {
 
-	public final long id = System.nanoTime();
-
-	@Override
-	public final boolean equals(Object arg0) {
-		if(arg0 == null)
-			return false;
-		if(!(arg0 instanceof AbstractLokiPlugin))
-			return false;
-		return ((AbstractLokiPlugin) arg0).id == id;
-	}
+	
 }

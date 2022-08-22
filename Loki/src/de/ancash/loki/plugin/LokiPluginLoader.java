@@ -2,7 +2,7 @@ package de.ancash.loki.plugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -24,9 +24,11 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	private LokiPluginDescription description;
 	private final Class<T> pluginClazz;
 	private final Logger logger;
+	private final JarFile jarFile;
 	
-	public LokiPluginLoader(Logger logger, Class<T> pluginClazz, File file) throws InvalidPluginException {
+	public LokiPluginLoader(Logger logger, Class<T> pluginClazz, File file) throws InvalidPluginException, IOException {
 		this.file = file;
+		this.jarFile = new JarFile(file);
 		this.logger = logger;
 		this.pluginClazz = pluginClazz;
 	}
@@ -45,13 +47,13 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	 */
 	public void loadJarEntries() throws InvalidPluginException {
 		JarEntry e = null;
-		try(JarFile f = new JarFile(file)) {
-			Enumeration<JarEntry> iter = f.entries();
+		try {
+			Enumeration<JarEntry> iter = jarFile.entries();
 			while(iter.hasMoreElements()) {
 				e = iter.nextElement();
 				jarEntries.add(e);
 				if(e.getName().equals("loki.yml"))
-					description = new LokiPluginDescription(f.getInputStream(e));
+					description = new LokiPluginDescription(jarFile.getInputStream(e));
 			}
 		} catch (IOException e1) {
 			throw new InvalidPluginException("Could not load" + (e != null ? ": " + e.getName() : "") + ": " + e1.getMessage());
@@ -60,7 +62,7 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 			throw new InvalidPluginException("No/Invalid loki.yml found in " + file.getName());
 		try {
 			clazzLoader = new LokiPluginClassLoader<>(logger, pluginClazz, this, getClass().getClassLoader(), file, filterClassEntries());
-		} catch (MalformedURLException e1) {
+		} catch (IOException e1) {
 			throw new InvalidPluginException(e1);
 		}
 	}
@@ -77,6 +79,19 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 		}
 	}
 
+	public List<JarEntry> getEntries() {
+		return jarEntries;
+	}
+	
+	public InputStream getInputStream(JarEntry e) throws IOException {
+		return jarFile.getInputStream(e);
+		
+	}
+	
+	public LokiPluginClassLoader<T> getClassLoader() {
+		return clazzLoader;
+	}
+	
 	/**
 	 * 
 	 * @return the plugin description (loki.yml)
@@ -86,7 +101,7 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	}
 	
 	/**
-	 * See {@link LokiPluginClassLoader#loadClasses}
+	 * See {@link LokiPluginURLClassLoader#loadClasses}
 	 * 
 	 * @throws InvalidPluginException
 	 */
@@ -105,12 +120,11 @@ public class LokiPluginLoader<T extends AbstractLokiPlugin> {
 	public void unload() {
 		try {
 			clazzLoader.nullifyStaticFields();
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException | IOException e) {
 			logger.log(Level.SEVERE, "Could not nullify static fields", e);
 		}
 		clazzLoader = null;
 		jarEntries.clear();
-		description = null;
 		plugin = null;
 	}
 }
