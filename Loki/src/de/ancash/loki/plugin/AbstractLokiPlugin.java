@@ -1,6 +1,7 @@
 package de.ancash.loki.plugin;
 
 import de.ancash.loki.AbstractLokiPluginManager;
+import de.ancash.loki.LokiPluginDescription;
 
 /**
  * Abstract plugin class to implement custom methods which are called on certain
@@ -9,5 +10,11 @@ import de.ancash.loki.AbstractLokiPluginManager;
  */
 public abstract class AbstractLokiPlugin {
 
+	public ClassLoader getClassLoader() {
+		return getClass().getClassLoader();
+	}
 	
+	public LokiPluginDescription getDescription() {
+		return ((LokiPluginClassLoader<?>) getClassLoader()).getLoader().getDescription();
+	}
 }

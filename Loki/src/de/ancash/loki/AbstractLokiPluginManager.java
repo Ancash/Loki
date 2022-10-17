@@ -47,6 +47,8 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 	 */
 	public void loadJars() {
 		File[] files = dir.listFiles();
+		if(files == null)
+			return;
 		for (File jar : files)
 			loadJar(jar);
 	}
@@ -71,6 +73,16 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 			logger.severe("Could not load plugin " + file.getName() + ": " + e.getMessage());
 			return null;
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public LokiPluginClassLoader<?> matchClass(String name) {
+		for(T t : loadedPlugins) {
+			LokiPluginClassLoader<T> cl = (LokiPluginClassLoader<T>) t.getClassLoader();
+			if(cl.getClazz(name) != null)
+				return cl;
+		}
+		return null;
 	}
 
 	/**
@@ -211,10 +223,11 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 								loadPlugin(plugin);
 								loadedPlugins.add(plugin);
 								break;
-							} catch (InvalidPluginException var21) {
+							} catch (Exception var21) {
 								logger.log(Level.SEVERE,
 										"Could not load '" + file.getPath() + "' in folder '" + dir.getPath() + "'",
 										var21);
+								var21.printStackTrace();
 							}
 						}
 					}
@@ -239,9 +252,10 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 						loadPlugin(plugin);
 						loadedPlugins.add(plugin);
 						break;
-					} catch (InvalidPluginException var22) {
+					} catch (Exception var22) {
 						logger.log(Level.SEVERE,
 								"Could not load '" + file.getPath() + "' in folder '" + dir.getPath() + "'", var22);
+						var22.printStackTrace();
 					}
 				}
 			} while (!missingDependency);
@@ -285,7 +299,7 @@ public abstract class AbstractLokiPluginManager<T extends AbstractLokiPlugin> {
 			l.newInstance();
 			loadedPlugins.add(l.getPlugin());
 			onPluginLoaded(l);
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			throw new InvalidPluginException("Error while instantiating", ex);
 		}
 	}

@@ -19,11 +19,21 @@ public class SimpleLokiPluginManagerImpl extends AbstractLokiPluginManager<Simpl
 
 	@Override
 	public void onPluginLoaded(LokiPluginLoader<SimpleLokiPluginImpl> t) {
-		t.getPlugin().onEnable();
+		try {
+			t.getPlugin().onEnable();
+		} catch(Throwable ex) {
+			System.err.println("Could not enable " + t.getDescription().getName() + " " + t.getDescription().getVersion());
+			ex.printStackTrace();
+		}
 	}
 
 	@Override
 	public void onPluginUnload(LokiPluginLoader<SimpleLokiPluginImpl> t) {
-		t.getPlugin().onDisable();
+		try {
+			t.getPlugin().onDisable();
+		} catch(Throwable ex) {
+			System.err.println("Could not disable " + t.getDescription().getName() + " " + t.getDescription().getVersion());
+			ex.printStackTrace();
+		}
 	}
 }

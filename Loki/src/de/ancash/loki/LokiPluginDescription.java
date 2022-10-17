@@ -58,6 +58,11 @@ public class LokiPluginDescription {
 		return main;
 	}
 	
+	@Override
+	public String toString() {
+		return String.format("%s v%s by %s", name, version, author);
+	}
+	
 	public Collection<String> getDepend() {
 		return Collections.unmodifiableCollection(description.getStringList("depend"));
 	}

@@ -6,14 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarEntry;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -29,12 +27,15 @@ import sun.misc.Unsafe;
  */
 public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends ClassLoader {
 
+	private static final AtomicInteger counter = new AtomicInteger();
+	
 	private final Map<String, Class<?>> classesByName = new HashMap<>();
 	private LokiPluginLoader<T> loader;
 	private final Class<T> clazz;
 	@SuppressWarnings("unused")
 	private final Logger logger;
 	private final Map<String, Object> classBytesByName = new HashMap<>();
+	private final int hash = counter.incrementAndGet();
 
 	public LokiPluginClassLoader(Logger logger, Class<T> clazz, LokiPluginLoader<T> loader, ClassLoader parent,
 			File file, List<String> classEntries) throws IOException {
@@ -67,6 +68,11 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends ClassLo
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	@Override
+	public int hashCode() {
+		return hash;
 	}
 	
 	/**
@@ -128,6 +134,8 @@ public class LokiPluginClassLoader<T extends AbstractLokiPlugin> extends ClassLo
 			throw new InvalidPluginException("Abnormal plugin type", e);
 		} catch (IllegalAccessException e) {
 			throw new InvalidPluginException("No public constructor", e);
+		} catch(Throwable e) {
+			throw new InvalidPluginException(e);
 		}
 	}
 
