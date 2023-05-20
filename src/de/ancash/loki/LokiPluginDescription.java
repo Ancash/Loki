@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.ancash.libs.org.simpleyaml.configuration.file.YamlFile;
+import org.simpleyaml.configuration.file.YamlFile;
 
 public class LokiPluginDescription {
 
